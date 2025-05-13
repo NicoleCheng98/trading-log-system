@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - 交易日志系统{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-{% if trade.id %}edit{% else %}plus{% endif %} me-2"></i>{{ title }}
+                </h5>
+                <a href="{{ url_for('main.pending_trades') }}" class="btn btn-sm btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>返回列表
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('main.edit_pending_trade', trade_id=trade.id) if trade.id else url_for('main.add_trade') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <!-- 表单分成多个部分，使用标签页导航 -->
+                    <ul class="nav nav-tabs mb-4" id="tradeFormTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
+                                <i class="fas fa-info-circle me-1"></i>基本信息
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab" aria-controls="analysis" aria-selected="false">
+                                <i class="fas fa-chart-line me-1"></i>交易分析
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="levels-tab" data-bs-toggle="tab" data-bs-target="#levels" type="button" role="tab" aria-controls="levels" aria-selected="false">
+                                <i class="fas fa-layer-group me-1"></i>支撑阻力位
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab" aria-controls="notes" aria-selected="false">
+                                <i class="fas fa-sticky-note me-1"></i>备注信息
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- 标签页内容 -->
+                    <div class="tab-content" id="tradeFormTabContent">
+                        <!-- 基本信息 -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="symbol" class="form-label">交易品种 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="symbol" name="symbol" value="{{ trade.symbol or '' }}" required>
+                                    <div class="form-text">例如：BTCUSDT, EURUSD, 600519.SH</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="direction" class="form-label">交易方向 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="direction" name="direction" required>
+                                        <option value="">-- 请选择 --</option>
+                                        <option value="buy" {% if trade.direction == 'buy' %}selected{% endif %}>买入</option>
+                                        <option value="sell" {% if trade.direction == 'sell' %}selected{% endif %}>卖出</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="price" class="form-label">信号价格 <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="price" name="price" value="{{ trade.price or '' }}" step="0.0001" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="timestamp" class="form-label">信号时间 <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="timestamp" name="timestamp" value="{{ trade.timestamp.strftime('%Y-%m-%dT%H:%M') if trade.timestamp else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="strategy" class="form-label">策略名称</label>
+                                    <input type="text" class="form-control" id="strategy" name="strategy" value="{{ trade.strategy or '' }}">
+                                    <div class="form-text">例如：MA交叉, 突破策略, 趋势跟踪</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="status" class="form-label">状态</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="pending" {% if not trade.status or trade.status == 'pending' %}selected{% endif %}>待处理</option>
+                                        <option value="confirmed" {% if trade.status == 'confirmed' %}selected{% endif %}>已确认</option>
+                                        <option value="rejected" {% if trade.status == 'rejected' %}selected{% endif %}>已拒绝</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 交易分析 -->
+                        <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="current_trend" class="form-label">当前趋势</label>
+                                    <select class="form-select" id="current_trend" name="current_trend">
+                                        <option value="">-- 请选择 --</option>
+                                        <option value="上涨" {% if trade.current_trend == '上涨' %}selected{% endif %}>上涨</option>
+                                        <option value="下跌" {% if trade.current_trend == '下跌' %}selected{% endif %}>下跌</option>
+                                        <option value="震荡" {% if trade.current_trend == '震荡' %}selected{% endif %}>震荡</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="timeframe" class="form-label">考虑交易的时间周期</label>
+                                    <input type="text" class="form-control" id="timeframe" name="timeframe" value="{{ trade.timeframe or '' }}">
+                                    <div class="form-text">例如：1h, 4h, 日线, 周线</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="risk_reward_ratio" class="form-label">盈亏比</label>
+                                    <input type="number" class="form-control" id="risk_reward_ratio" name="risk_reward_ratio" value="{{ trade.risk_reward_ratio or '' }}" step="0.1">
+                                    <div class="form-text">例如：3表示盈利可能性是亏损的3倍</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="entry_price_target" class="form-label">目标进场价格</label>
+                                    <input type="number" class="form-control" id="entry_price_target" name="entry_price_target" value="{{ trade.entry_price_target or '' }}" step="0.0001">
+                                    <div class="form-text">基于盈亏比计算的理想进场价格</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="stop_loss" class="form-label">止损价格</label>
+                                    <input type="number" class="form-control" id="stop_loss" name="stop_loss" value="{{ trade.stop_loss or '' }}" step="0.0001">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="take_profit" class="form-label">止盈价格</label>
+                                    <input type="number" class="form-control" id="take_profit" name="take_profit" value="{{ trade.take_profit or '' }}" step="0.0001">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="support_resistance_reaction" class="form-label">K线触及支撑阻力位的反应</label>
+                                    <textarea class="form-control" id="support_resistance_reaction" name="support_resistance_reaction" rows="3">{{ trade.support_resistance_reaction or '' }}</textarea>
+                                    <div class="form-text">描述价格在触及支撑阻力位时的反应情况</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 支撑阻力位 -->
+                        <div class="tab-pane fade" id="levels" role="tabpanel" aria-labelledby="levels-tab">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>输入多个价格级别时，请用逗号分隔，例如：<code>48000, 45000</code>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="weekly_resistance" class="form-label">周线阻力位</label>
+                                    <input type="text" class="form-control" id="weekly_resistance" name="weekly_resistance" value="{{ trade.weekly_resistance or '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="weekly_support" class="form-label">周线支撑位</label>
+                                    <input type="text" class="form-control" id="weekly_support" name="weekly_support" value="{{ trade.weekly_support or '' }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="daily_resistance" class="form-label">日线阻力位</label>
+                                    <input type="text" class="form-control" id="daily_resistance" name="daily_resistance" value="{{ trade.daily_resistance or '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="daily_support" class="form-label">日线支撑位</label>
+                                    <input type="text" class="form-control" id="daily_support" name="daily_support" value="{{ trade.daily_support or '' }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="h4_resistance" class="form-label">4小时阻力位</label>
+                                    <input type="text" class="form-control" id="h4_resistance" name="h4_resistance" value="{{ trade.h4_resistance or '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="h4_support" class="form-label">4小时支撑位</label>
+                                    <input type="text" class="form-control" id="h4_support" name="h4_support" value="{{ trade.h4_support or '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 备注信息 -->
+                        <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="notes" class="form-label">备注信息</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="6">{{ trade.notes or '' }}</textarea>
+                                    <div class="form-text">添加任何关于这笔交易的额外信息</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 表单按钮 -->
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>保存
+                            </button>
+                            <a href="{{ url_for('main.pending_trades') }}" class="btn btn-secondary ms-2">
+                                <i class="fas fa-times me-1"></i>取消
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 自动计算盈亏比和目标价格
+    document.addEventListener('DOMContentLoaded', function() {
+        const stopLossInput = document.getElementById('stop_loss');
+        const takeProfitInput = document.getElementById('take_profit');
+        const priceInput = document.getElementById('price');
+        const riskRewardRatioInput = document.getElementById('risk_reward_ratio');
+        const entryPriceTargetInput = document.getElementById('entry_price_target');
+        const directionSelect = document.getElementById('direction');
+        
+        // 当止损、止盈或价格改变时，计算盈亏比
+        function calculateRiskRewardRatio() {
+            const price = parseFloat(priceInput.value);
+            const stopLoss = parseFloat(stopLossInput.value);
+            const takeProfit = parseFloat(takeProfitInput.value);
+            const direction = directionSelect.value;
+            
+            if (price && stopLoss && takeProfit && direction) {
+                let risk, reward;
+                
+                if (direction === 'buy') {
+                    risk = price - stopLoss;
+                    reward = takeProfit - price;
+                } else {
+                    risk = stopLoss - price;
+                    reward = price - takeProfit;
+                }
+                
+                if (risk > 0) {
+                    const ratio = (reward / risk).toFixed(2);
+                    riskRewardRatioInput.value = ratio;
+                }
+            }
+        }
+        
+        // 当盈亏比改变时，计算目标进场价格
+        function calculateEntryPriceTarget() {
+            const stopLoss = parseFloat(stopLossInput.value);
+            const takeProfit = parseFloat(takeProfitInput.value);
+            const ratio = parseFloat(riskRewardRatioInput.value);
+            const direction = directionSelect.value;
+            
+            if (stopLoss && takeProfit && ratio && direction) {
+                let entryPrice;
+                
+                if (direction === 'buy') {
+                    // 买入：目标进场价格 = (止盈价格 - 止损价格 * 盈亏比) / (1 + 盈亏比)
+                    entryPrice = (takeProfit - stopLoss * ratio) / (1 + ratio);
+                } else {
+                    // 卖出：目标进场价格 = (止盈价格 + 止损价格 * 盈亏比) / (1 + 盈亏比)
+                    entryPrice = (takeProfit + stopLoss * ratio) / (1 + ratio);
+                }
+                
+                entryPriceTargetInput.value = entryPrice.toFixed(4);
+            }
+        }
+        
+        // 绑定事件
+        stopLossInput.addEventListener('change', calculateRiskRewardRatio);
+        takeProfitInput.addEventListener('change', calculateRiskRewardRatio);
+        priceInput.addEventListener('change', calculateRiskRewardRatio);
+        directionSelect.addEventListener('change', calculateRiskRewardRatio);
+        
+        riskRewardRatioInput.addEventListener('change', calculateEntryPriceTarget);
+        stopLossInput.addEventListener('change', calculateEntryPriceTarget);
+        takeProfitInput.addEventListener('change', calculateEntryPriceTarget);
+        directionSelect.addEventListener('change', calculateEntryPriceTarget);
+    });
+</script>
+{% endblock %}

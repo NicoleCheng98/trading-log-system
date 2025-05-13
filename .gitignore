@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.env
+venv/
+ENV/
+.DS_Store
+*.db
+instance/
+.webassets-cache
+.pytest_cache/
+.coverage
+htmlcov/

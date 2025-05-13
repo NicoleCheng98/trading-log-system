@@ -1,0 +1,201 @@
+/* 主样式文件 */
+:root {
+  --primary-color: #2c3e50;
+  --secondary-color: #3498db;
+  --success-color: #2ecc71;
+  --danger-color: #e74c3c;
+  --warning-color: #f39c12;
+  --light-bg: #f8f9fa;
+  --dark-bg: #343a40;
+}
+
+body {
+  font-family: 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: var(--light-bg);
+  padding-top: 56px;
+}
+
+/* 导航栏样式 */
+.navbar {
+  background-color: var(--primary-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  color: white !important;
+}
+
+/* 卡片样式 */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card-header {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+/* 表格样式 */
+.table {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table th {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* 交易方向标签 */
+.badge-buy {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.badge-sell {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* 状态标签 */
+.badge-pending {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.badge-confirmed {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.badge-rejected {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* 表单样式 */
+.form-control:focus {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.btn-primary {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+/* 分析面板 */
+.analysis-panel {
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-panel h5 {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--secondary-color);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+/* 价格标签 */
+.price-tag {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* 趋势标签 */
+.trend-up {
+  color: var(--success-color);
+}
+
+.trend-down {
+  color: var(--danger-color);
+}
+
+.trend-sideways {
+  color: var(--warning-color);
+}
+
+/* 支撑阻力位标签 */
+.support-resistance {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin: 2px;
+  font-size: 0.85rem;
+}
+
+.resistance {
+  background-color: #ffecec;
+  border: 1px solid #ffcaca;
+  color: #e74c3c;
+}
+
+.support {
+  background-color: #ecffec;
+  border: 1px solid #caffca;
+  color: #2ecc71;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .card {
+    margin-bottom: 15px;
+  }
+  
+  .table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}
+
+/* 图表容器 */
+.chart-container {
+  height: 300px;
+  margin-bottom: 20px;
+}
+
+/* 加载动画 */
+.spinner-border {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+}
+
+/* 页脚样式 */
+footer {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 20px 0;
+  margin-top: 40px;
+}
+
+footer a {
+  color: #3498db;
+}
+
+footer a:hover {
+  color: #2980b9;
+  text-decoration: none;
+}

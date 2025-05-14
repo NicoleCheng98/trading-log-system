@@ -338,7 +338,210 @@ def delete_pending_trade(trade_id):
 @main_bp.route('/analysis')
 def analysis():
     """交易分析页面"""
-    return render_template('analysis.html')
+    # 获取当前日期，用于移动端快速筛选
+    now = datetime.now()
+    
+    # 获取筛选参数
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    symbol = request.args.get('symbol')
+    direction = request.args.get('direction')
+    
+    # 构建查询 - 只查询已完成的交易
+    query = Trade.query.filter(Trade.exit_price != None)
+    
+    # 应用筛选条件
+    if date_from:
+        query = query.filter(Trade.entry_time >= datetime.strptime(date_from, '%Y-%m-%d'))
+    if date_to:
+        query = query.filter(Trade.entry_time <= datetime.strptime(date_to + ' 23:59:59', '%Y-%m-%d %H:%M:%S'))
+    if symbol:
+        query = query.filter(Trade.symbol.ilike(f'%{symbol}%'))
+    if direction:
+        query = query.filter(Trade.direction == direction)
+    
+    # 获取交易数据
+    trades = query.order_by(Trade.entry_time.desc()).all()
+    
+    # 计算统计数据
+    total_trades = len(trades)
+    profitable_trades = sum(1 for trade in trades if trade.profit_loss and trade.profit_loss > 0)
+    losing_trades = sum(1 for trade in trades if trade.profit_loss and trade.profit_loss < 0)
+    
+    # 计算胜率和亏损率
+    win_rate = f"{profitable_trades / total_trades * 100:.2f}%" if total_trades > 0 else "0%"
+    loss_rate = f"{losing_trades / total_trades * 100:.2f}%" if total_trades > 0 else "0%"
+    
+    # 计算净盈亏
+    net_profit_loss = sum(trade.profit_loss or 0 for trade in trades)
+    
+    # 计算风险管理相关指标
+    r_multiples = [trade.r_multiple for trade in trades if trade.r_multiple]
+    risk_percentages = [trade.risk_percentage for trade in trades if trade.risk_percentage]
+    trade_qualities = [trade.trade_quality for trade in trades if trade.trade_quality]
+    
+    avg_r_multiple = sum(r_multiples) / len(r_multiples) if r_multiples else 0
+    avg_risk_percentage = sum(risk_percentages) / len(risk_percentages) if risk_percentages else 0
+    avg_trade_quality = sum(trade_qualities) / len(trade_qualities) if trade_qualities else 0
+    
+    # 分页
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    pagination = query.order_by(Trade.entry_time.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    page_trades = pagination.items
+    
+    return render_template('analysis.html',
+                           trades=page_trades,
+                           pagination=pagination,
+                           total_trades=total_trades,
+                           profitable_trades=profitable_trades,
+                           losing_trades=losing_trades,
+                           win_rate=win_rate,
+                           loss_rate=loss_rate,
+                           net_profit_loss=f"{net_profit_loss:.2f}",
+                           avg_r_multiple=f"{avg_r_multiple:.2f}",
+                           avg_risk_percentage=f"{avg_risk_percentage:.2f}",
+                           avg_trade_quality=f"{avg_trade_quality:.2f}",
+                           now=now,
+                           timedelta=timedelta)
+
+@main_bp.route('/trade-review/<int:trade_id>', methods=['GET', 'POST'])
+def trade_review(trade_id):
+    """交易复盘页面"""
+    trade = Trade.query.get_or_404(trade_id)
+    
+    if request.method == 'POST':
+        try:
+            # 更新交易复盘信息
+            trade.review_date = datetime.now()
+            trade.execution_quality = int(request.form.get('execution_quality')) if request.form.get('execution_quality') else None
+            trade.psychology_state = request.form.get('psychology_state')
+            trade.market_condition = request.form.get('market_condition')
+            trade.lessons_learned = request.form.get('lessons_learned')
+            trade.improvement_points = request.form.get('improvement_points')
+            trade.trade_screenshots = request.form.get('trade_screenshots')
+            
+            # 处理风险管理相关字段
+            trade.trade_quality = int(request.form.get('trade_quality')) if request.form.get('trade_quality') else None
+            trade.plan_vs_execution = int(request.form.get('plan_vs_execution')) if request.form.get('plan_vs_execution') else None
+            trade.r_multiple = float(request.form.get('r_multiple')) if request.form.get('r_multiple') else None
+            
+            # 根据已有数据计算其他风险指标
+            if trade.profit_loss and trade.initial_risk and trade.initial_risk != 0:
+                # 如果没有手动设置R倍数，则自动计算
+                if not trade.r_multiple:
+                    trade.r_multiple = round(trade.profit_loss / trade.initial_risk, 2)
+            
+            trade.review_status = 'completed'
+            
+            db.session.commit()
+            
+            flash('交易复盘已保存', 'success')
+            return redirect(url_for('main.view_trade', trade_id=trade.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'保存复盘失败: {str(e)}', 'danger')
+    
+    # GET请求，显示复盘表单
+    return render_template('trade_review.html', trade=trade)
+
+@main_bp.route('/trade-logs')
+def trade_logs():
+    """交易日志列表页面"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    # 构建查询 - 只显示已复盘的交易
+    query = Trade.query.filter_by(review_status='completed')
+    
+    # 应用过滤器
+    if request.args.get('symbol'):
+        query = query.filter(Trade.symbol.ilike(f'%{request.args.get("symbol")}%'))
+    if request.args.get('direction'):
+        query = query.filter_by(direction=request.args.get('direction'))
+    if request.args.get('strategy'):
+        query = query.filter(Trade.strategy.ilike(f'%{request.args.get("strategy")}%'))
+    if request.args.get('start_date') and request.args.get('end_date'):
+        start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d')
+        end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d')
+        query = query.filter(Trade.entry_time.between(start_date, end_date))
+    
+    # 排序
+    query = query.order_by(Trade.review_date.desc())
+    
+    # 分页
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    trades = pagination.items
+    
+    return render_template('trade_logs.html', trades=trades, pagination=pagination)
+
+@main_bp.route('/generate-log', methods=['GET', 'POST'])
+def generate_log():
+    """生成交易日志报告"""
+    if request.method == 'POST':
+        # 获取表单数据
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        symbol = request.form.get('symbol')
+        strategy = request.form.get('strategy')
+        direction = request.form.get('direction')
+        include_screenshots = 'include_screenshots' in request.form
+        
+        # 构建查询
+        query = Trade.query
+        
+        # 应用过滤器
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            query = query.filter(Trade.entry_time.between(start_date, end_date))
+        if symbol:
+            query = query.filter(Trade.symbol.ilike(f'%{symbol}%'))
+        if strategy:
+            query = query.filter(Trade.strategy.ilike(f'%{strategy}%'))
+        if direction:
+            query = query.filter_by(direction=direction)
+        
+        # 只包含已复盘的交易
+        query = query.filter_by(review_status='completed')
+        
+        # 排序
+        query = query.order_by(Trade.entry_time.desc())
+        
+        # 获取交易
+        trades = query.all()
+        
+        if not trades:
+            flash('没有找到符合条件的交易记录', 'warning')
+            return redirect(url_for('main.generate_log'))
+        
+        # 计算统计数据
+        total_trades = len(trades)
+        profit_trades = sum(1 for trade in trades if trade.profit_loss and trade.profit_loss > 0)
+        loss_trades = sum(1 for trade in trades if trade.profit_loss and trade.profit_loss <= 0)
+        win_rate = (profit_trades / total_trades * 100) if total_trades > 0 else 0
+        
+        total_profit = sum(trade.profit_loss for trade in trades if trade.profit_loss and trade.profit_loss > 0) or 0
+        total_loss = sum(trade.profit_loss for trade in trades if trade.profit_loss and trade.profit_loss <= 0) or 0
+        net_profit = total_profit + total_loss
+        
+        # 生成报告
+        return render_template('trade_log_report.html', 
+                              trades=trades, 
+                              total_trades=total_trades,
+                              profit_trades=profit_trades,
+                              loss_trades=loss_trades,
+                              win_rate=win_rate,
+                              total_profit=total_profit,
+                              total_loss=total_loss,
+                              net_profit=net_profit,
+                              include_screenshots=include_screenshots,
+                              start_date=start_date.strftime('%Y-%m-%d') if isinstance(start_date, datetime) else start_date,
+                              end_date=end_date.strftime('%Y-%m-%d') if isinstance(end_date, datetime) else end_date)
+    
+    # GET请求，显示生成报告的表单
+    return render_template('generate_log_form.html')
 
 # API路由，用于获取JSON数据
 

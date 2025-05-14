@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- 自定义样式 -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- 移动端优化样式 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -44,6 +46,16 @@
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'main.analysis' %}active{% endif %}" href="{{ url_for('main.analysis') }}">
                             <i class="fas fa-chart-bar me-1"></i>交易分析
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.trade_logs' %}active{% endif %}" href="{{ url_for('main.trade_logs') }}">
+                            <i class="fas fa-book me-1"></i>交易日志
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.generate_log' %}active{% endif %}" href="{{ url_for('main.generate_log') }}">
+                            <i class="fas fa-file-alt me-1"></i>生成报告
                         </a>
                     </li>
                 </ul>
@@ -79,6 +91,31 @@
             <p class="text-muted small">使用 Flask 和 PostgreSQL 构建</p>
         </div>
     </footer>
+
+    <!-- 移动端底部操作栏 -->
+    <div class="mobile-action-bar">
+        <a href="{{ url_for('main.index') }}" class="btn btn-dark">
+            <i class="fas fa-home"></i>
+            首页
+        </a>
+        <a href="{{ url_for('main.pending_trades') }}" class="btn btn-dark">
+            <i class="fas fa-clock"></i>
+            待处理
+        </a>
+        <a href="{{ url_for('main.trades') }}" class="btn btn-dark">
+            <i class="fas fa-exchange-alt"></i>
+            已确认
+        </a>
+        <a href="{{ url_for('main.analysis') }}" class="btn btn-dark">
+            <i class="fas fa-chart-bar"></i>
+            分析
+        </a>
+    </div>
+    
+    <!-- 浮动添加按钮 -->
+    <a href="{{ url_for('main.add_trade') }}" class="floating-add-button">
+        <i class="fas fa-plus"></i>
+    </a>
 
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

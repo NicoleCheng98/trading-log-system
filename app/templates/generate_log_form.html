@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}生成交易日志报告{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="border-bottom pb-2">
+                <i class="fas fa-file-alt me-2"></i>生成交易日志报告
+                <small class="text-muted">选择筛选条件生成报告</small>
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>报告筛选条件</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('main.generate_log') }}">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">开始日期</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            <div class="form-text">选择报告的起始日期</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">结束日期</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            <div class="form-text">选择报告的结束日期</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="symbol" class="form-label">交易品种</label>
+                            <input type="text" class="form-control" id="symbol" name="symbol">
+                            <div class="form-text">可选，留空表示包含所有品种</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="strategy" class="form-label">交易策略</label>
+                            <input type="text" class="form-control" id="strategy" name="strategy">
+                            <div class="form-text">可选，留空表示包含所有策略</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="direction" class="form-label">交易方向</label>
+                            <select class="form-select" id="direction" name="direction">
+                                <option value="">全部</option>
+                                <option value="buy">买入</option>
+                                <option value="sell">卖出</option>
+                            </select>
+                            <div class="form-text">可选，留空表示包含所有方向</div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="include_screenshots" name="include_screenshots">
+                            <label class="form-check-label" for="include_screenshots">包含交易截图</label>
+                            <div class="form-text">选中后报告将包含交易截图（如果有）</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-file-export me-1"></i>生成报告
+                            </button>
+                            <a href="{{ url_for('main.trade_logs') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>返回交易日志
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 设置默认日期范围为过去30天
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        document.getElementById('end_date').value = today.toISOString().split('T')[0];
+        document.getElementById('start_date').value = thirtyDaysAgo.toISOString().split('T')[0];
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}交易复盘 - {{ trade.symbol }} {{ trade.direction }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="border-bottom pb-2">
+                <i class="fas fa-search me-2"></i>交易复盘
+                <small class="text-muted">{{ trade.symbol }} {{ trade.direction }}</small>
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>交易基本信息</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>交易品种：</th>
+                            <td>{{ trade.symbol }}</td>
+                        </tr>
+                        <tr>
+                            <th>交易方向：</th>
+                            <td>
+                                {% if trade.direction == 'buy' %}
+                                <span class="badge bg-success">买入</span>
+                                {% else %}
+                                <span class="badge bg-danger">卖出</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>入场价格：</th>
+                            <td>{{ trade.entry_price }}</td>
+                        </tr>
+                        <tr>
+                            <th>出场价格：</th>
+                            <td>{{ trade.exit_price or '未出场' }}</td>
+                        </tr>
+                        <tr>
+                            <th>入场时间：</th>
+                            <td>{{ trade.entry_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <th>出场时间：</th>
+                            <td>{{ trade.exit_time.strftime('%Y-%m-%d %H:%M') if trade.exit_time else '未出场' }}</td>
+                        </tr>
+                        <tr>
+                            <th>盈亏金额：</th>
+                            <td>
+                                {% if trade.profit_loss %}
+                                    {% if trade.profit_loss > 0 %}
+                                    <span class="text-success">+{{ trade.profit_loss }}</span>
+                                    {% else %}
+                                    <span class="text-danger">{{ trade.profit_loss }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    未知
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>盈亏百分比：</th>
+                            <td>
+                                {% if trade.profit_loss_percent %}
+                                    {% if trade.profit_loss_percent > 0 %}
+                                    <span class="text-success">+{{ trade.profit_loss_percent }}%</span>
+                                    {% else %}
+                                    <span class="text-danger">{{ trade.profit_loss_percent }}%</span>
+                                    {% endif %}
+                                {% else %}
+                                    未知
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>交易分析数据</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>当前趋势：</th>
+                            <td>{{ trade.current_trend or '未设置' }}</td>
+                        </tr>
+                        <tr>
+                            <th>盈亏比：</th>
+                            <td>{{ trade.risk_reward_ratio or '未设置' }}</td>
+                        </tr>
+                        <tr>
+                            <th>止损价格：</th>
+                            <td>{{ trade.stop_loss or '未设置' }}</td>
+                        </tr>
+                        <tr>
+                            <th>止盈价格：</th>
+                            <td>{{ trade.take_profit or '未设置' }}</td>
+                        </tr>
+                        <tr>
+                            <th>周线支撑位：</th>
+                            <td>{{ trade.weekly_support or '未设置' }}</td>
+                        </tr>
+                        <tr>
+                            <th>周线阻力位：</th>
+                            <td>{{ trade.weekly_resistance or '未设置' }}</td>
+                        </tr>
+                        <tr>
+                            <th>日线支撑位：</th>
+                            <td>{{ trade.daily_support or '未设置' }}</td>
+                        </tr>
+                        <tr>
+                            <th>日线阻力位：</th>
+                            <td>{{ trade.daily_resistance or '未设置' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>风险管理数据</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>账户总资金：</th>
+                            <td>{% if trade.account_size %}{{ trade.account_size }} USDT{% else %}未设置{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>风险百分比：</th>
+                            <td>{% if trade.risk_percentage %}{{ trade.risk_percentage }}%{% else %}未设置{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>初始风险金额：</th>
+                            <td>{% if trade.initial_risk %}{{ trade.initial_risk }} USDT{% else %}未设置{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>仓位大小：</th>
+                            <td>{{ trade.position_size or '未设置' }}</td>
+                        </tr>
+                        <tr>
+                            <th>R倍数：</th>
+                            <td>{% if trade.r_multiple %}{{ trade.r_multiple }}R{% else %}未计算{% endif %}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>交易复盘表单</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('main.trade_review', trade_id=trade.id) }}">
+                        <div class="mb-3">
+                            <label for="execution_quality" class="form-label">执行质量评分 (1-10)</label>
+                            <input type="number" class="form-control" id="execution_quality" name="execution_quality" min="1" max="10" value="{{ trade.execution_quality or '' }}" required>
+                            <div class="form-text">评分标准：1分最差，10分最好</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="psychology_state" class="form-label">交易心理状态</label>
+                            <select class="form-select" id="psychology_state" name="psychology_state" required>
+                                <option value="" {% if not trade.psychology_state %}selected{% endif %}>请选择</option>
+                                <option value="冷静" {% if trade.psychology_state == '冷静' %}selected{% endif %}>冷静</option>
+                                <option value="恐惧" {% if trade.psychology_state == '恐惧' %}selected{% endif %}>恐惧</option>
+                                <option value="贪婪" {% if trade.psychology_state == '贪婪' %}selected{% endif %}>贪婪</option>
+                                <option value="犹豫" {% if trade.psychology_state == '犹豫' %}selected{% endif %}>犹豫</option>
+                                <option value="冲动" {% if trade.psychology_state == '冲动' %}selected{% endif %}>冲动</option>
+                                <option value="自信" {% if trade.psychology_state == '自信' %}selected{% endif %}>自信</option>
+                                <option value="焦虑" {% if trade.psychology_state == '焦虑' %}selected{% endif %}>焦虑</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="market_condition" class="form-label">市场条件</label>
+                            <select class="form-select" id="market_condition" name="market_condition" required>
+                                <option value="" {% if not trade.market_condition %}selected{% endif %}>请选择</option>
+                                <option value="强势上涨" {% if trade.market_condition == '强势上涨' %}selected{% endif %}>强势上涨</option>
+                                <option value="强势下跌" {% if trade.market_condition == '强势下跌' %}selected{% endif %}>强势下跌</option>
+                                <option value="震荡整理" {% if trade.market_condition == '震荡整理' %}selected{% endif %}>震荡整理</option>
+                                <option value="突破上行" {% if trade.market_condition == '突破上行' %}selected{% endif %}>突破上行</option>
+                                <option value="突破下行" {% if trade.market_condition == '突破下行' %}selected{% endif %}>突破下行</option>
+                                <option value="高波动" {% if trade.market_condition == '高波动' %}selected{% endif %}>高波动</option>
+                                <option value="低波动" {% if trade.market_condition == '低波动' %}selected{% endif %}>低波动</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="trade_quality" class="form-label">交易质量评分 (1-10)</label>
+                            <input type="number" class="form-control" id="trade_quality" name="trade_quality" min="1" max="10" value="{{ trade.trade_quality or '' }}">
+                            <div class="form-text">评估交易的整体质量，1分最差，10分最好</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="plan_vs_execution" class="form-label">计划执行一致性 (1-10)</label>
+                            <input type="number" class="form-control" id="plan_vs_execution" name="plan_vs_execution" min="1" max="10" value="{{ trade.plan_vs_execution or '' }}">
+                            <div class="form-text">评估交易计划与实际执行的一致程度，1分最差，10分最好</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="r_multiple" class="form-label">R倍数计算</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="r_multiple" name="r_multiple" step="0.1" value="{{ trade.r_multiple or '' }}">
+                                <span class="input-group-text">R</span>
+                            </div>
+                            <div class="form-text">盈亏与初始风险的比值，例如：盈利300元，初始风险100元，则R倍数为3R</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="lessons_learned" class="form-label">经验教训</label>
+                            <textarea class="form-control" id="lessons_learned" name="lessons_learned" rows="4" required>{{ trade.lessons_learned or '' }}</textarea>
+                            <div class="form-text">记录本次交易中学到的经验和教训</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="improvement_points" class="form-label">改进点</label>
+                            <textarea class="form-control" id="improvement_points" name="improvement_points" rows="4" required>{{ trade.improvement_points or '' }}</textarea>
+                            <div class="form-text">记录下次交易中需要改进的地方</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="trade_screenshots" class="form-label">交易截图路径</label>
+                            <input type="text" class="form-control" id="trade_screenshots" name="trade_screenshots" value="{{ trade.trade_screenshots or '' }}">
+                            <div class="form-text">多个截图路径请用逗号分隔</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('main.view_trade', trade_id=trade.id) }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>取消
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>保存复盘
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

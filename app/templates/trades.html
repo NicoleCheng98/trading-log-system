@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}已确认交易 - 交易日志系统{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>已确认交易记录</h5>
+                <div>
+                    <a href="{{ url_for('main.add_trade') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>添加交易
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- 筛选器 -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <form method="get" action="{{ url_for('main.trades') }}" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="symbol" class="form-label">交易品种</label>
+                                <input type="text" class="form-control" id="symbol" name="symbol" value="{{ request.args.get('symbol', '') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="direction" class="form-label">方向</label>
+                                <select class="form-select" id="direction" name="direction">
+                                    <option value="">全部</option>
+                                    <option value="buy" {% if request.args.get('direction') == 'buy' %}selected{% endif %}>买入</option>
+                                    <option value="sell" {% if request.args.get('direction') == 'sell' %}selected{% endif %}>卖出</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="strategy" class="form-label">策略</label>
+                                <input type="text" class="form-control" id="strategy" name="strategy" value="{{ request.args.get('strategy', '') }}">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter me-1"></i>筛选
+                                </button>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <a href="{{ url_for('main.trades') }}" class="btn btn-secondary w-100">
+                                    <i class="fas fa-undo me-1"></i>重置
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- 交易列表 -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>交易品种</th>
+                                <th>方向</th>
+                                <th>入场价格</th>
+                                <th>出场价格</th>
+                                <th>入场时间</th>
+                                <th>盈亏</th>
+                                <th>R倍数</th>
+                                <th>交易质量</th>
+                                <th>复盘状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in trades %}
+                            <tr>
+                                <td>{{ trade.id }}</td>
+                                <td><strong>{{ trade.symbol }}</strong></td>
+                                <td>
+                                    {% if trade.direction == 'buy' %}
+                                    <span class="badge bg-success">买入</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">卖出</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ trade.entry_price }}</td>
+                                <td>{{ trade.exit_price or '未出场' }}</td>
+                                <td>{{ trade.entry_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td class="{% if trade.profit_loss and trade.profit_loss > 0 %}text-success{% elif trade.profit_loss and trade.profit_loss < 0 %}text-danger{% endif %}">
+                                    {% if trade.profit_loss %}
+                                        {{ trade.profit_loss }}
+                                        {% if trade.profit_loss_percent %}
+                                        ({{ trade.profit_loss_percent }}%)
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if trade.r_multiple %}
+                                    <span class="badge {% if trade.r_multiple >= 2 %}bg-success{% elif trade.r_multiple >= 1 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ trade.r_multiple }}R
+                                    </span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if trade.trade_quality %}
+                                    <span class="badge {% if trade.trade_quality >= 8 %}bg-success{% elif trade.trade_quality >= 6 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ trade.trade_quality }}/10
+                                    </span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if trade.review_status == 'completed' %}
+                                    <span class="badge bg-success">已复盘</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">未复盘</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('main.view_trade', trade_id=trade.id) }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if trade.review_status != 'completed' %}
+                                        <a href="{{ url_for('main.trade_review', trade_id=trade.id) }}" class="btn btn-outline-info">
+                                            <i class="fas fa-clipboard-check"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="11" class="text-center py-4">
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>没有找到符合条件的交易记录
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                {% if pagination and pagination.pages > 1 %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('main.trades', page=pagination.prev_num, symbol=request.args.get('symbol', ''), direction=request.args.get('direction', ''), strategy=request.args.get('strategy', '')) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page %}
+                                {% if page == pagination.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page }}</span>
+                                </li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('main.trades', page=page, symbol=request.args.get('symbol', ''), direction=request.args.get('direction', ''), strategy=request.args.get('strategy', '')) }}">
+                                        {{ page }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('main.trades', page=pagination.next_num, symbol=request.args.get('symbol', ''), direction=request.args.get('direction', ''), strategy=request.args.get('strategy', '')) }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

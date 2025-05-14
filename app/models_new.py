@@ -119,15 +119,6 @@ class Trade(db.Model):
     trade_screenshots = db.Column(db.Text, comment='交易截图路径（多个路径用逗号分隔）')
     review_status = db.Column(db.String(20), default='pending', comment='复盘状态(pending/completed)')
     
-    # 风险管理相关字段
-    account_size = db.Column(db.Float, comment='交易时的账户总资金')
-    risk_percentage = db.Column(db.Float, comment='风险占账户百分比')
-    position_size = db.Column(db.Float, comment='仓位大小')
-    r_multiple = db.Column(db.Float, comment='R倍数(盈亏与初始风险的比值)')
-    initial_risk = db.Column(db.Float, comment='初始风险金额')
-    plan_vs_execution = db.Column(db.Integer, comment='计划执行一致性评分(1-10)')
-    trade_quality = db.Column(db.Integer, comment='交易质量评分(1-10)')
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

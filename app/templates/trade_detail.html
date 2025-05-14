@@ -55,10 +55,14 @@
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-4">
-                                    <strong>信号时间:</strong>
+                                    <strong>入场时间:</strong>
                                 </div>
                                 <div class="col-md-8">
-                                    {{ trade.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                                    {% if trade.entry_time %}
+                                        {{ trade.entry_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                                    {% else %}
+                                        <span class="text-muted">未设置</span>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -267,6 +271,139 @@
                                             {% else %}
                                                 <span class="text-muted">未设置</span>
                                             {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 风险管理 -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="analysis-panel">
+                            <h5><i class="fas fa-shield-alt me-2"></i>风险管理</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0">仓位与风险信息</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <strong>账户总资金:</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if trade.account_size %}
+                                                    <span class="price-tag">{{ trade.account_size }} USDT</span>
+                                                    {% else %}
+                                                    <span class="text-muted">未设置</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <strong>风险百分比:</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if trade.risk_percentage %}
+                                                    <span class="badge {% if trade.risk_percentage <= 2 %}bg-success{% elif trade.risk_percentage <= 5 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                        {{ trade.risk_percentage }}%
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="text-muted">未设置</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <strong>初始风险金额:</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if trade.initial_risk %}
+                                                    <span class="price-tag text-danger">{{ trade.initial_risk }} USDT</span>
+                                                    {% else %}
+                                                    <span class="text-muted">未设置</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <strong>仓位大小:</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if trade.position_size %}
+                                                    <span class="price-tag">{{ trade.position_size }}</span>
+                                                    {% else %}
+                                                    <span class="text-muted">未设置</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0">交易评估</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <strong>R倍数:</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if trade.r_multiple %}
+                                                    <span class="badge {% if trade.r_multiple >= 2 %}bg-success{% elif trade.r_multiple >= 1 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                        {{ trade.r_multiple }}R
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="text-muted">未计算</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <strong>交易质量评分:</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if trade.trade_quality %}
+                                                    <span class="badge {% if trade.trade_quality >= 8 %}bg-success{% elif trade.trade_quality >= 6 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                        {{ trade.trade_quality }}/10
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="text-muted">未评分</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <strong>计划执行一致性:</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if trade.plan_vs_execution %}
+                                                    <span class="badge {% if trade.plan_vs_execution >= 8 %}bg-success{% elif trade.plan_vs_execution >= 6 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                        {{ trade.plan_vs_execution }}/10
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="text-muted">未评分</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <strong>复盘状态:</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if trade.review_status == 'completed' %}
+                                                    <span class="badge bg-success">已复盘</span>
+                                                    {% else %}
+                                                    <span class="badge bg-warning">未复盘</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -19,25 +19,35 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
                     <!-- 表单分成多个部分，使用标签页导航 -->
+                    <!-- 移动端快速导航指示 -->
+                    <div class="d-md-none alert alert-info mb-2 py-2">
+                        <small><i class="fas fa-arrow-right me-1"></i>左右滑动可切换不同的表单页面</small>
+                    </div>
+                    
                     <ul class="nav nav-tabs mb-4" id="tradeFormTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
-                                <i class="fas fa-info-circle me-1"></i>基本信息
+                                <i class="fas fa-info-circle me-1"></i><span class="d-none d-sm-inline">基本信息</span><span class="d-inline d-sm-none">基本</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab" aria-controls="analysis" aria-selected="false">
-                                <i class="fas fa-chart-line me-1"></i>交易分析
+                                <i class="fas fa-chart-line me-1"></i><span class="d-none d-sm-inline">交易分析</span><span class="d-inline d-sm-none">分析</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="levels-tab" data-bs-toggle="tab" data-bs-target="#levels" type="button" role="tab" aria-controls="levels" aria-selected="false">
-                                <i class="fas fa-layer-group me-1"></i>支撑阻力位
+                                <i class="fas fa-layer-group me-1"></i><span class="d-none d-sm-inline">支撑阻力位</span><span class="d-inline d-sm-none">价位</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="risk-tab" data-bs-toggle="tab" data-bs-target="#risk" type="button" role="tab" aria-controls="risk" aria-selected="false">
+                                <i class="fas fa-shield-alt me-1"></i><span class="d-none d-sm-inline">风险管理</span><span class="d-inline d-sm-none">风险</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab" aria-controls="notes" aria-selected="false">
-                                <i class="fas fa-sticky-note me-1"></i>备注信息
+                                <i class="fas fa-sticky-note me-1"></i><span class="d-none d-sm-inline">备注信息</span><span class="d-inline d-sm-none">备注</span>
                             </button>
                         </li>
                     </ul>
@@ -47,12 +57,12 @@
                         <!-- 基本信息 -->
                         <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6 col-sm-6 mb-3">
                                     <label for="symbol" class="form-label">交易品种 <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="symbol" name="symbol" value="{{ trade.symbol or '' }}" required>
-                                    <div class="form-text">例如：BTCUSDT, EURUSD, 600519.SH</div>
+                                    <div class="form-text small">例如：BTCUSDT, EURUSD</div>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6 col-sm-6 mb-3">
                                     <label for="direction" class="form-label">交易方向 <span class="text-danger">*</span></label>
                                     <select class="form-select" id="direction" name="direction" required>
                                         <option value="">-- 请选择 --</option>
@@ -178,6 +188,72 @@
                             </div>
                         </div>
                         
+                        <!-- 风险管理 -->
+                        <div class="tab-pane fade" id="risk" role="tabpanel" aria-labelledby="risk-tab">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>风险管理是交易成功的关键，建议将单笔交易风险控制在1-2%以内
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="account_size" class="form-label">账户总资金</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="account_size" name="account_size" value="{{ trade.account_size or '' }}" step="0.01">
+                                        <span class="input-group-text">USDT</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="risk_percentage" class="form-label">风险百分比</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="risk_percentage" name="risk_percentage" value="{{ trade.risk_percentage or '1' }}" step="0.1" min="0.1" max="10">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-text">建议控制在1-2%以内</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="initial_risk" class="form-label">初始风险金额</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="initial_risk" name="initial_risk" value="{{ trade.initial_risk or '' }}" step="0.01" readonly>
+                                        <span class="input-group-text">USDT</span>
+                                    </div>
+                                    <div class="form-text">根据账户总资金和风险百分比自动计算</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="position_size" class="form-label">建议仓位大小</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="position_size" name="position_size" value="{{ trade.position_size or '' }}" step="0.001">
+                                        <button class="btn btn-outline-secondary" type="button" id="calculatePosition">计算</button>
+                                    </div>
+                                    <div class="form-text">点击计算按钮根据风险计算建议仓位</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="r_multiple" class="form-label">R倍数</label>
+                                    <input type="number" class="form-control" id="r_multiple" name="r_multiple" value="{{ trade.r_multiple or '' }}" step="0.1" readonly>
+                                    <div class="form-text">盈亏与初始风险的比值，交易结束后自动计算</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="trade_quality" class="form-label">交易质量评分</label>
+                                    <select class="form-select" id="trade_quality" name="trade_quality">
+                                        <option value="">-- 请选择 --</option>
+                                        {% for i in range(1, 11) %}
+                                        <option value="{{ i }}" {% if trade.trade_quality == i %}selected{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">1分最差，10分最好，交易结束后评分</div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- 备注信息 -->
                         <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
                             <div class="row">
@@ -193,10 +269,16 @@
                     <!-- 表单按钮 -->
                     <div class="row mt-4">
                         <div class="col-md-12 text-center">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i>保存
+                            <button type="submit" class="btn btn-primary btn-lg w-100 mb-2 d-md-none">
+                                <i class="fas fa-save me-1"></i>保存交易
                             </button>
-                            <a href="{{ url_for('main.pending_trades') }}" class="btn btn-secondary ms-2">
+                            <button type="submit" class="btn btn-primary d-none d-md-inline-block">
+                                <i class="fas fa-save me-1"></i>保存交易
+                            </button>
+                            <a href="{{ url_for('main.pending_trades') if trade.id else url_for('main.index') }}" class="btn btn-secondary ms-md-2 d-none d-md-inline-block">
+                                <i class="fas fa-times me-1"></i>取消
+                            </a>
+                            <a href="{{ url_for('main.pending_trades') if trade.id else url_for('main.index') }}" class="btn btn-outline-secondary w-100 d-md-none">
                                 <i class="fas fa-times me-1"></i>取消
                             </a>
                         </div>
@@ -209,8 +291,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- 引入风险管理计算器脚本 -->
+<script src="{{ url_for('static', filename='js/risk_calculator.js') }}"></script>
 <script>
-    // 自动计算盈亏比和目标价格
     document.addEventListener('DOMContentLoaded', function() {
         const stopLossInput = document.getElementById('stop_loss');
         const takeProfitInput = document.getElementById('take_profit');
@@ -255,11 +338,11 @@
                 let entryPrice;
                 
                 if (direction === 'buy') {
-                    // 买入：目标进场价格 = (止盈价格 - 止损价格 * 盈亏比) / (1 + 盈亏比)
-                    entryPrice = (takeProfit - stopLoss * ratio) / (1 + ratio);
+                    // 买入：目标进场价格 = 止损价格 + (止盈价格 - 止损价格) / (盈亏比 + 1)
+                    entryPrice = stopLoss + (takeProfit - stopLoss) / (ratio + 1);
                 } else {
-                    // 卖出：目标进场价格 = (止盈价格 + 止损价格 * 盈亏比) / (1 + 盈亏比)
-                    entryPrice = (takeProfit + stopLoss * ratio) / (1 + ratio);
+                    // 卖出：目标进场价格 = 止损价格 - (止损价格 - 止盈价格) / (盈亏比 + 1)
+                    entryPrice = stopLoss - (stopLoss - takeProfit) / (ratio + 1);
                 }
                 
                 entryPriceTargetInput.value = entryPrice.toFixed(4);
@@ -276,6 +359,10 @@
         stopLossInput.addEventListener('change', calculateEntryPriceTarget);
         takeProfitInput.addEventListener('change', calculateEntryPriceTarget);
         directionSelect.addEventListener('change', calculateEntryPriceTarget);
+        
+        // 页面加载时进行初始计算
+        calculateRiskRewardRatio();
+        calculateEntryPriceTarget();
     });
 </script>
 {% endblock %}

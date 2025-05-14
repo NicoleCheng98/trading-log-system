@@ -8,6 +8,7 @@
 - 管理待处理交易和已确认交易
 - 记录交易详情，包括进出场价格、盈亏等信息
 - 支持详细的交易分析参数（趋势、支撑阻力位、盈亏比等）
+- 提供完善的风险管理功能，包括账户资金管理、风险控制和R倍数计算
 - 基于 Flask 和 PostgreSQL 构建，易于扩展
 
 ## 项目结构
@@ -91,6 +92,13 @@ trading_log_system/
    - stop_loss: 止损价格
    - take_profit: 止盈价格
    - support_resistance_reaction: K线触及支撑阻力位的反应
+   - account_size: 交易时的账户总资金
+   - risk_percentage: 风险占账户百分比
+   - position_size: 仓位大小
+   - r_multiple: R倍数(盈亏与初始风险的比值)
+   - initial_risk: 初始风险金额
+   - plan_vs_execution: 计划执行一致性评分(1-10)
+   - trade_quality: 交易质量评分(1-10)
 
 ## TradingView 联动说明
 
@@ -272,6 +280,285 @@ $ sqlite3 trading_log.db
 6. **K线反应**：在K线触及支撑阻力位时的反应情况
 
 这些字段可以帮助你在小区间交易中更好地评估风险和收益潜力。
+
+## 风险管理功能
+
+本系统提供了完善的风险管理功能，帮助交易者更好地控制交易风险，提高交易成功率。
+
+### 风险管理字段
+
+系统包含以下风险管理相关字段：
+
+1. **账户总资金**：交易时的账户总资金量
+
+2. **风险百分比**：单笔交易风险占账户总资金的百分比（建议控制在1-2%以内）
+
+3. **初始风险金额**：根据账户总资金和风险百分比自动计算的单笔交易风险金额
+
+4. **仓位大小**：根据初始风险金额、入场价格和止损价格自动计算的合适仓位大小
+
+5. **R倍数**：交易盈亏与初始风险的比值，用于衡量交易效率
+
+6. **计划执行一致性**：评估交易计划与实际执行的一致程度（1-10分）
+
+7. **交易质量评分**：对交易整体质量的评估（1-10分）
+
+### 风险计算器
+
+系统集成了自动风险计算器，可以实时计算以下数据：
+
+1. **初始风险计算**：输入账户总资金和风险百分比，自动计算初始风险金额
+   ```
+   初始风险 = 账户总资金 × 风险百分比 ÷ 100
+   ```
+
+2. **仓位大小计算**：根据初始风险、入场价格和止损价格计算合适的仓位大小
+   ```
+   每单位风险 = |入场价格 - 止损价格|
+   仓位大小 = 初始风险 ÷ 每单位风险
+   ```
+
+3. **R倍数计算**：根据盈亏金额和初始风险计算R倍数
+   ```
+   R倍数 = 盈亏金额 ÷ 初始风险
+   ```
+
+### 使用方法
+
+1. **交易前的风险管理**：
+   - 在交易表单的“风险管理”选项卡中输入账户总资金和风险百分比
+   - 系统自动计算初始风险金额
+   - 输入入场价格和止损价格后，系统自动计算合适的仓位大小
+
+2. **交易后的风险评估**：
+   - 交易完成后，系统根据实际盈亏和初始风险自动计算R倍数
+   - 在交易复盘页面中评估交易质量和计划执行一致性
+
+3. **交易详情查看**：
+   - 在交易详情页面中查看完整的风险管理数据
+   - 系统会使用颜色编码（绿色、黄色、红色）直观显示风险指标的好坏
+
+### 风险管理最佳实践
+
+1. **控制单笔交易风险**：将单笔交易风险控制在1-2%以内，避免过大风险
+
+2. **关注R倍数**：追求更高的R倍数，提高交易效率
+
+3. **定期评估交易质量**：使用交易质量评分和计划执行一致性评分进行自我审视
+
+4. **追踪账户增长**：定期更新账户总资金，跟踪账户增长情况
+
+## VPS 部署指南
+
+系统已经成功部署在服务器上，可以通过 [`http://46.250.226.112`](http://46.250.226.112) 访问。以下是完整的部署步骤，便于你在其他服务器上部署相同的系统。
+
+### 第一步：连接到 VPS
+
+```bash
+ssh root@你的服务器IP
+```
+
+### 第二步：更新系统并安装必要的软件包
+
+```bash
+# 更新系统
+sudo apt update
+sudo apt upgrade -y
+
+# 安装必要的软件包
+sudo apt install -y python3-pip python3-venv git nginx
+```
+
+### 第三步：创建项目目录并克隆代码
+
+```bash
+# 创建项目目录
+mkdir -p /var/www/trading_log
+cd /var/www/trading_log
+
+# 克隆代码
+git clone https://github.com/NicoleCheng98/trading-log-system.git .
+```
+
+### 第四步：设置 Python 虚拟环境并安装依赖
+
+```bash
+# 创建虚拟环境
+python3 -m venv venv
+
+# 激活虚拟环境
+source venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 安装 gunicorn（用于生产环境部署）
+pip install gunicorn
+```
+
+### 第五步：配置数据库
+
+```bash
+# 设置 Flask 应用
+export FLASK_APP=run.py
+
+# 初始化数据库
+flask db init
+flask db migrate -m "初始化数据库表结构"
+flask db upgrade
+```
+
+### 第六步：配置 Gunicorn 服务
+
+创建 Gunicorn 服务文件：
+
+```bash
+sudo nano /etc/systemd/system/trading_log.service
+```
+
+添加以下内容：
+
+```ini
+[Unit]
+Description=Gunicorn instance to serve trading log system
+After=network.target
+
+[Service]
+User=root
+Group=www-data
+WorkingDirectory=/var/www/trading_log
+Environment="PATH=/var/www/trading_log/venv/bin"
+ExecStart=/var/www/trading_log/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5001 run:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启动并设置开机自启：
+
+```bash
+sudo systemctl start trading_log
+sudo systemctl enable trading_log
+```
+
+### 第七步：配置 Nginx 反向代理
+
+创建 Nginx 配置文件：
+
+```bash
+sudo nano /etc/nginx/sites-available/trading_log
+```
+
+添加以下内容：
+
+```nginx
+server {
+    listen 80;
+    server_name 46.250.226.112;  # 你的服务器 IP
+
+    location / {
+        proxy_pass http://localhost:5001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+启用配置并重启 Nginx：
+
+```bash
+sudo ln -s /etc/nginx/sites-available/trading_log /etc/nginx/sites-enabled
+sudo nginx -t  # 测试配置是否正确
+sudo systemctl restart nginx
+```
+
+### 第八步：配置防火墙
+
+```bash
+# 允许 SSH、HTTP 和 HTTPS 连接
+sudo ufw allow ssh
+sudo ufw allow http
+sudo ufw allow https
+
+# 启用防火墙
+sudo ufw enable
+```
+
+### 第九步：测试系统
+
+现在，你可以通过浏览器访问你的交易日志系统：
+
+```text
+http://46.250.226.112
+```
+
+### 第十步：配置 TradingView Webhook
+
+在 TradingView 中设置 webhook URL 为：
+
+```text
+http://46.250.226.112/api/webhook
+```
+
+### 交易复盘与日志功能
+
+本系统提供了完整的交易复盘和日志生成功能，帮助交易者分析过去的交易，总结经验教训，提高交易水平。
+
+#### 交易复盘功能
+
+交易复盘功能允许用户对已完成的交易进行详细的复盘评估，包括：
+
+- 执行质量评分：对交易执行质量进行1-10分的评分
+- 交易心理状态：记录交易时的心理状态（冷静、恐惧、贪婪等）
+- 市场条件：记录交易时的市场环境（强势上涨、强势下跌、震荡整理等）
+- 经验教训：记录从本次交易中学到的经验和教训
+- 改进点：记录下次交易需要改进的地方
+- 交易截图：上传交易相关的截图路径，方便后续查看
+
+使用方法：
+
+1. 在已确认交易列表中找到需要复盘的交易
+2. 点击"编辑复盘"按钮进入复盘页面
+3. 填写复盘表单并保存
+
+#### 交易日志功能
+
+交易日志功能允许用户查看所有已复盘的交易记录，并生成综合报告：
+
+- 交易日志列表：显示所有已复盘的交易记录，支持按品种、方向、策略、日期等筛选
+- 日志报告生成：根据筛选条件生成详细的交易日志报告
+- 报告打印：支持将生成的报告打印或保存为PDF文件
+
+使用方法：
+
+1. 点击导航栏中的"交易日志"查看所有已复盘的交易记录
+2. 点击"生成报告"按钮，设置筛选条件生成交易日志报告
+3. 在报告页面点击"打印报告"按钮，可以打印或保存为PDF文件
+
+### 系统维护
+
+定期备份数据库：
+
+```bash
+# 备份 SQLite 数据库
+mkdir -p /var/www/trading_log/backups
+cp /var/www/trading_log/trading_log.db /var/www/trading_log/backups/trading_log_$(date +%Y%m%d).db
+```
+
+### 故障排除
+
+如果系统无法正常工作，可以查看日志：
+
+```bash
+# 查看 Gunicorn 服务日志
+sudo journalctl -u trading_log
+
+# 查看 Nginx 日志
+sudo tail -f /var/log/nginx/error.log
+```
 
 ## 后续开发计划
 
